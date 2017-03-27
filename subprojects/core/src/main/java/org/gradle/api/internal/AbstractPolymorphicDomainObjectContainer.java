@@ -86,11 +86,9 @@ public abstract class AbstractPolymorphicDomainObjectContainer<T>
         }
 
         @Override
-        public void getProperty(String name, GetPropertyResult result) {
+        public GetPropertyResult tryGetProperty(String name) {
             Object object = findByName(name);
-            if (object != null) {
-                result.result(object);
-            }
+            return object == null ? GetPropertyResult.notFound() : GetPropertyResult.found(object);
         }
 
         @Override

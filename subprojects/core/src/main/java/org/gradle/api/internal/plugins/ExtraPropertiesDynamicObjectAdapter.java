@@ -19,7 +19,6 @@ package org.gradle.api.internal.plugins;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.internal.metaobject.AbstractDynamicObject;
 import org.gradle.internal.metaobject.GetPropertyResult;
-import org.gradle.internal.metaobject.SetPropertyResult;
 
 import java.util.Map;
 
@@ -48,17 +47,19 @@ public class ExtraPropertiesDynamicObjectAdapter extends AbstractDynamicObject {
     }
 
     @Override
-    public void getProperty(String name, GetPropertyResult result) {
+    public GetPropertyResult tryGetProperty(String name) {
         if (extension.has(name)) {
-            result.result(extension.get(name));
+            return GetPropertyResult.found(extension.get(name));
         }
+        return GetPropertyResult.notFound();
     }
 
     @Override
-    public void setProperty(String name, Object value, SetPropertyResult result) {
+    public boolean trySetProperty(String name, Object value) {
         if (extension.has(name)) {
             extension.set(name, value);
-            result.found();
+            return true;
         }
+        return false;
     }
 }

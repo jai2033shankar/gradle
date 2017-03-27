@@ -19,7 +19,6 @@ package org.gradle.api.internal
 import org.gradle.internal.metaobject.GetPropertyResult
 import org.gradle.internal.metaobject.PropertyAccess
 import org.gradle.internal.metaobject.PropertyMixIn
-import org.gradle.internal.metaobject.SetPropertyResult
 
 class BeanWithMixInProperties implements PropertyMixIn {
     String prop
@@ -33,17 +32,19 @@ class BeanWithMixInProperties implements PropertyMixIn {
             }
 
             @Override
-            void getProperty(String name, GetPropertyResult result) {
+            GetPropertyResult tryGetProperty(String name) {
                 if (name == "dyno") {
-                    result.result("ok")
+                    return GetPropertyResult.found("ok")
                 }
+                return GetPropertyResult.notFound();
             }
 
             @Override
-            void setProperty(String name, Object value, SetPropertyResult result) {
+            boolean trySetProperty(String name, Object value) {
                 if (name == "dyno") {
-                    result.found()
+                    return true;
                 }
+                return false;
             }
 
             @Override

@@ -29,7 +29,6 @@ import org.gradle.internal.metaobject.BeanDynamicObject;
 import org.gradle.internal.metaobject.DynamicObject;
 import org.gradle.internal.metaobject.GetPropertyResult;
 import org.gradle.internal.metaobject.InvokeMethodResult;
-import org.gradle.internal.metaobject.SetPropertyResult;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.util.ConfigureUtil;
 
@@ -265,19 +264,19 @@ public class DefaultConvention implements Convention, ExtensionContainerInternal
         }
 
         @Override
-        public void getProperty(String name, GetPropertyResult result) {
+        public GetPropertyResult tryGetProperty(String name) {
             Object extension = extensionsStorage.findByName(name);
             if (extension != null) {
-                result.result(extension);
-                return;
+                return GetPropertyResult.found(extension);
             }
             for (Object object : plugins.values()) {
                 DynamicObject dynamicObject = asDynamicObject(object).withNotImplementsMissing();
-                dynamicObject.getProperty(name, result);
+                GetPropertyResult result = dynamicObject.tryGetProperty(name);
                 if (result.isFound()) {
-                    return;
+                    return result;
                 }
             }
+            return GetPropertyResult.notFound();
         }
 
         public Object propertyMissing(String name) {
@@ -285,15 +284,16 @@ public class DefaultConvention implements Convention, ExtensionContainerInternal
         }
 
         @Override
-        public void setProperty(String name, Object value, SetPropertyResult result) {
+        public boolean trySetProperty(String name, Object value) {
             checkExtensionIsNotReassigned(name);
             for (Object object : plugins.values()) {
                 BeanDynamicObject dynamicObject = asDynamicObject(object).withNotImplementsMissing();
-                dynamicObject.setProperty(name, value, result);
-                if (result.isFound()) {
-                    return;
+                boolean found = dynamicObject.trySetProperty(name, value);
+                if (found) {
+                    return true;
                 }
             }
+            return false;
         }
 
         public void propertyMissing(String name, Object value) {

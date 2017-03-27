@@ -44,7 +44,8 @@ public class ConfigureDelegate extends GroovyObjectSupport {
     protected void _configure(String name, Object[] params, InvokeMethodResult result) {
     }
 
-    protected void _configure(String name, GetPropertyResult result) {
+    protected GetPropertyResult _configure(String name) {
+        return GetPropertyResult.notFound();
     }
 
     @Override
@@ -94,14 +95,13 @@ public class ConfigureDelegate extends GroovyObjectSupport {
 
     @Override
     public void setProperty(String property, Object newValue) {
-        SetPropertyResult result = new SetPropertyResult();
-        _delegate.setProperty(property, newValue, result);
-        if (result.isFound()) {
+        boolean found = _delegate.trySetProperty(property, newValue);
+        if (found) {
             return;
         }
 
-        _owner.setProperty(property, newValue, result);
-        if (result.isFound()) {
+        found = _owner.trySetProperty(property, newValue);
+        if (found) {
             return;
         }
 
@@ -112,20 +112,19 @@ public class ConfigureDelegate extends GroovyObjectSupport {
         boolean isAlreadyConfiguring = _configuring.get();
         _configuring.set(true);
         try {
-            GetPropertyResult result = new GetPropertyResult();
-            _delegate.getProperty(name, result);
+            GetPropertyResult result = _delegate.tryGetProperty(name);
             if (result.isFound()) {
                 return result.getValue();
             }
 
-            _owner.getProperty(name, result);
+            result = _owner.tryGetProperty(name);
             if (result.isFound()) {
                 return result.getValue();
             }
 
             if (!isAlreadyConfiguring) {
                 // Try to configure an element
-                _configure(name, result);
+                result = _configure(name);
                 if (result.isFound()) {
                     return result.getValue();
                 }

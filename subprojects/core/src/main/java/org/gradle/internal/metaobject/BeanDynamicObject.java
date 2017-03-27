@@ -171,13 +171,13 @@ public class BeanDynamicObject extends AbstractDynamicObject {
     }
 
     @Override
-    public void getProperty(String name, GetPropertyResult result) {
-        delegate.getProperty(name, result);
+    public GetPropertyResult tryGetProperty(String name) {
+        return delegate.getProperty(name);
     }
 
     @Override
-    public void setProperty(String name, Object value, SetPropertyResult result) {
-        delegate.setProperty(name, value, result);
+    public boolean trySetProperty(String name, Object value) {
+        return delegate.setProperty(name, value);
     }
 
     @Override
@@ -214,9 +214,9 @@ public class BeanDynamicObject extends AbstractDynamicObject {
             return false;
         }
 
-        public void getProperty(String name, GetPropertyResult result) {
+        public GetPropertyResult getProperty(String name) {
             if (!includeProperties) {
-                return;
+                return GetPropertyResult.notFound();
             }
 
             MetaClass metaClass = getMetaClass();
@@ -229,32 +229,30 @@ public class BeanDynamicObject extends AbstractDynamicObject {
                 }
 
                 try {
-                    result.result(property.getProperty(bean));
+                    return GetPropertyResult.found(property.getProperty(bean));
                 } catch (InvokerInvocationException e) {
                     if (e.getCause() instanceof RuntimeException) {
                         throw (RuntimeException) e.getCause();
                     }
                     throw e;
                 }
-                return;
             }
 
             if (bean instanceof PropertyMixIn) {
                 PropertyMixIn propertyMixIn = (PropertyMixIn) bean;
-                propertyMixIn.getAdditionalProperties().getProperty(name, result);
+                return propertyMixIn.getAdditionalProperties().tryGetProperty(name);
                 // Do not check for opaque properties when implementing PropertyMixIn, as this is expensive
-                return;
             }
 
             if (!implementsMissing) {
-                return;
+                return GetPropertyResult.notFound();
             }
 
             // Fall back to propertyMissing, if available
             MetaMethod propertyMissing = findGetPropertyMissingMethod(metaClass);
             if (propertyMissing != null) {
                 try {
-                    result.result(propertyMissing.invoke(bean, new Object[]{name}));
+                    return GetPropertyResult.found(propertyMissing.invoke(bean, new Object[]{name}));
                 } catch (MissingPropertyException e) {
                     if (!name.equals(e.getProperty())) {
                         throw e;
@@ -263,10 +261,11 @@ public class BeanDynamicObject extends AbstractDynamicObject {
                 }
             }
 
-            getOpaqueProperty(name, result);
+            return getOpaqueProperty(name);
         }
 
-        protected void getOpaqueProperty(String name, GetPropertyResult result) {
+        protected GetPropertyResult getOpaqueProperty(String name) {
+            return GetPropertyResult.notFound();
         }
 
         @Nullable
@@ -348,9 +347,9 @@ public class BeanDynamicObject extends AbstractDynamicObject {
             return metaClass.getMetaProperty(name);
         }
 
-        public void setProperty(final String name, Object value, SetPropertyResult result) {
+        public boolean setProperty(final String name, Object value) {
             if (!includeProperties) {
-                return;
+                return false;
             }
 
             MetaClass metaClass = getMetaClass();
@@ -362,8 +361,7 @@ public class BeanDynamicObject extends AbstractDynamicObject {
                     InvokeMethodResult setterResult = new InvokeMethodResult();
                     invokeMethod(setterName, setterResult, value);
                     if (setterResult.isFound()) {
-                        result.found();
-                        return;
+                        return true;
                     }
                 } else {
                     if (property instanceof MetaBeanProperty) {
@@ -386,28 +384,25 @@ public class BeanDynamicObject extends AbstractDynamicObject {
                         value = propertySetTransformer.transformValue(property.getType(), value);
                         property.setProperty(bean, value);
                     }
-                    result.found();
-                    return;
+                    return true;
                 }
             }
 
             if (bean instanceof PropertyMixIn) {
                 PropertyMixIn propertyMixIn = (PropertyMixIn) bean;
-                propertyMixIn.getAdditionalProperties().setProperty(name, value, result);
+                return propertyMixIn.getAdditionalProperties().trySetProperty(name, value);
                 // When implementing PropertyMixIn, do not check for opaque properties, as this can be expensive
-                return;
             }
 
             if (!implementsMissing) {
-                return;
+                return false;
             }
 
             MetaMethod propertyMissingMethod = findSetPropertyMissingMethod(metaClass);
             if (propertyMissingMethod != null) {
                 try {
                     propertyMissingMethod.invoke(bean, new Object[]{name, value});
-                    result.found();
-                    return;
+                    return true;
                 } catch (MissingPropertyException e) {
                     if (!name.equals(e.getProperty())) {
                         throw e;
@@ -416,10 +411,11 @@ public class BeanDynamicObject extends AbstractDynamicObject {
                 }
             }
 
-            setOpaqueProperty(metaClass, name, value, result);
+            return setOpaqueProperty(metaClass, name, value);
         }
 
-        protected void setOpaqueProperty(MetaClass metaClass, String name, Object value, SetPropertyResult result) {
+        protected boolean setOpaqueProperty(MetaClass metaClass, String name, Object value) {
+            return false;
         }
 
         public Map<String, ?> getProperties() {
@@ -554,28 +550,30 @@ public class BeanDynamicObject extends AbstractDynamicObject {
         private final GroovyObject groovyObject = (GroovyObject) bean;
 
         @Override
-        protected void getOpaqueProperty(String name, GetPropertyResult result) {
+        protected GetPropertyResult getOpaqueProperty(String name) {
             try {
-                result.result(groovyObject.getProperty(name));
+                return GetPropertyResult.found(groovyObject.getProperty(name));
             } catch (MissingPropertyException e) {
                 if (!name.equals(e.getProperty())) {
                     throw e;
                 }
                 // Else, ignore
             }
+            return GetPropertyResult.notFound();
         }
 
         @Override
-        protected void setOpaqueProperty(MetaClass metaClass, String name, Object value, SetPropertyResult result) {
+        protected boolean setOpaqueProperty(MetaClass metaClass, String name, Object value) {
             try {
                 groovyObject.setProperty(name, value);
-                result.found();
+                return true;
             } catch (MissingPropertyException e) {
                 if (!name.equals(e.getProperty())) {
                     throw e;
                 }
                 // Else, ignore
             }
+            return false;
         }
 
         @Override
@@ -607,8 +605,8 @@ public class BeanDynamicObject extends AbstractDynamicObject {
         }
 
         @Override
-        protected void getOpaqueProperty(String name, GetPropertyResult result) {
-            result.result(map.get(name));
+        protected GetPropertyResult getOpaqueProperty(String name) {
+            return GetPropertyResult.found(map.get(name));
         }
 
         @Override
@@ -617,9 +615,9 @@ public class BeanDynamicObject extends AbstractDynamicObject {
         }
 
         @Override
-        protected void setOpaqueProperty(MetaClass metaClass, String name, Object value, SetPropertyResult result) {
+        protected boolean setOpaqueProperty(MetaClass metaClass, String name, Object value) {
             map.put(name, value);
-            result.found();
+            return true;
         }
     }
 

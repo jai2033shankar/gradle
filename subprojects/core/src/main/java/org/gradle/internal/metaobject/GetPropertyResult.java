@@ -16,23 +16,53 @@
 
 package org.gradle.internal.metaobject;
 
-public class GetPropertyResult {
-    private Object value;
-    private boolean found;
+public abstract class GetPropertyResult {
 
-    /**
-     * Indicates that the property has been found with the given value.
-     */
-    public void result(Object value) {
-        this.value = value;
-        this.found = true;
+    public static GetPropertyResult found(Object value) {
+        return new Found(value);
     }
 
-    public boolean isFound() {
-        return found;
+    public static GetPropertyResult notFound() {
+        return NotFound.INSTANCE;
     }
 
-    public Object getValue() {
-        return value;
+    private GetPropertyResult() {
+    }
+
+    public abstract Object getValue();
+
+    public abstract boolean isFound();
+
+    private static class NotFound extends GetPropertyResult {
+        private static final NotFound INSTANCE = new NotFound();
+
+        @Override
+        public Object getValue() {
+            throw new IllegalStateException("Not found");
+        }
+
+        @Override
+        public boolean isFound() {
+            return false;
+        }
+    }
+
+    private static class Found extends GetPropertyResult {
+
+        private final Object value;
+
+        private Found(Object value) {
+            this.value = value;
+        }
+
+        @Override
+        public Object getValue() {
+            return value;
+        }
+
+        @Override
+        public boolean isFound() {
+            return true;
+        }
     }
 }

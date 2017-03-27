@@ -67,12 +67,11 @@ public abstract class BasicScript extends org.gradle.groovy.scripts.Script imple
         if (getBinding().hasVariable(property)) {
             return super.getProperty(property);
         }
-        GetPropertyResult result = new GetPropertyResult();
-        scriptObject.getProperty(property, result);
+        GetPropertyResult result = scriptObject.tryGetProperty(property);
         if (result.isFound()) {
             return result.getValue();
         }
-        dynamicTarget.getProperty(property, result);
+        result = dynamicTarget.tryGetProperty(property);
         if (result.isFound()) {
             return result.getValue();
         }

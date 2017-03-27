@@ -30,8 +30,8 @@ public class NamedDomainObjectContainerConfigureDelegate extends ConfigureDelega
     }
 
     @Override
-    protected void _configure(String name, GetPropertyResult result) {
-        result.result(_container.create(name));
+    protected GetPropertyResult _configure(String name) {
+        return GetPropertyResult.found(_container.create(name));
     }
 
     @Override

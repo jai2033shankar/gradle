@@ -15,12 +15,12 @@
  */
 package org.gradle.internal.metaobject;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
-
-import org.junit.Test;
-import groovy.lang.*;
 import groovy.lang.MissingMethodException;
+import groovy.lang.MissingPropertyException;
+import org.junit.Test;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.*;
 
 public class AbstractDynamicObjectTest {
     private final AbstractDynamicObject object = new AbstractDynamicObject() {
@@ -41,9 +41,8 @@ public class AbstractDynamicObjectTest {
             assertThat(e.getMessage(), equalTo("Could not get unknown property 'something' for <display-name>."));
         }
 
-        GetPropertyResult getResult = new GetPropertyResult();
-        object.getProperty("something", getResult);
-        assertFalse(getResult.isFound());
+        GetPropertyResult result = object.tryGetProperty("something");
+        assertFalse(result.isFound());
 
         try {
             object.setProperty("something", "value");
@@ -52,9 +51,8 @@ public class AbstractDynamicObjectTest {
             assertThat(e.getMessage(), equalTo("Could not set unknown property 'something' for <display-name>."));
         }
 
-        SetPropertyResult setResult = new SetPropertyResult();
-        object.setProperty("something", "value", setResult);
-        assertFalse(setResult.isFound());
+        boolean found = object.trySetProperty("something", "value");
+        assertFalse(found);
     }
 
     @Test

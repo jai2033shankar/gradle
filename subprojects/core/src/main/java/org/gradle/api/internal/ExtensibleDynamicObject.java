@@ -29,7 +29,6 @@ import org.gradle.internal.metaobject.DynamicObject;
 import org.gradle.internal.metaobject.GetPropertyResult;
 import org.gradle.internal.metaobject.InvokeMethodResult;
 import org.gradle.internal.metaobject.MixInClosurePropertiesAsMethodsDynamicObject;
-import org.gradle.internal.metaobject.SetPropertyResult;
 import org.gradle.internal.reflect.Instantiator;
 
 import java.util.ArrayList;
@@ -211,8 +210,9 @@ public class ExtensibleDynamicObject extends MixInClosurePropertiesAsMethodsDyna
         }
 
         @Override
-        public void setProperty(String name, Object value, SetPropertyResult result) {
+        public boolean trySetProperty(String name, Object value) {
             setProperty(name, value);
+            return false;
         }
 
         @Override
@@ -226,8 +226,8 @@ public class ExtensibleDynamicObject extends MixInClosurePropertiesAsMethodsDyna
         }
 
         @Override
-        public void getProperty(String name, GetPropertyResult result) {
-            snapshotInheritable().getProperty(name, result);
+        public GetPropertyResult tryGetProperty(String name) {
+            return snapshotInheritable().tryGetProperty(name);
         }
 
         @Override

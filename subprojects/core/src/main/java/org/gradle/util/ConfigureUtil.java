@@ -27,7 +27,6 @@ import org.gradle.internal.Actions;
 import org.gradle.internal.metaobject.ConfigureDelegate;
 import org.gradle.internal.metaobject.DynamicObject;
 import org.gradle.internal.metaobject.InvokeMethodResult;
-import org.gradle.internal.metaobject.SetPropertyResult;
 
 import java.util.Collection;
 import java.util.Map;
@@ -46,9 +45,8 @@ public class ConfigureUtil {
             String name = entry.getKey().toString();
             Object value = entry.getValue();
 
-            SetPropertyResult setterResult = new SetPropertyResult();
-            dynamicObject.setProperty(name, value, setterResult);
-            if (setterResult.isFound()) {
+            boolean found = dynamicObject.trySetProperty(name, value);
+            if (found) {
                 continue;
             }
 

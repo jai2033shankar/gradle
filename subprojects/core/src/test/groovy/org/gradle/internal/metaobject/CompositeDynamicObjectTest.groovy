@@ -39,8 +39,8 @@ class CompositeDynamicObjectTest extends Specification {
         result == 12
 
         and:
-        1 * obj1.getProperty("p", _)
-        1 * obj2.getProperty("p", _) >> { String name, GetPropertyResult r -> r.result(12) }
+        1 * obj1.tryGetProperty("p") >> GetPropertyResult.notFound()
+        1 * obj2.tryGetProperty("p") >> GetPropertyResult.found(12)
         0 * _
     }
 
@@ -57,8 +57,8 @@ class CompositeDynamicObjectTest extends Specification {
         result == null
 
         and:
-        1 * obj1.getProperty("p", _)
-        1 * obj2.getProperty("p", _) >> { String name, GetPropertyResult r -> r.result(null) }
+        1 * obj1.tryGetProperty("p") >> GetPropertyResult.notFound()
+        1 * obj2.tryGetProperty("p") >> GetPropertyResult.found(null)
         0 * _
     }
 
@@ -73,6 +73,9 @@ class CompositeDynamicObjectTest extends Specification {
 
         then:
         def e = thrown(MissingPropertyException)
+        1 * obj1.tryGetProperty("p") >> GetPropertyResult.notFound()
+        1 * obj2.tryGetProperty("p") >> GetPropertyResult.notFound()
+        1 * obj3.tryGetProperty("p") >> GetPropertyResult.notFound()
         e.message == "Could not get unknown property 'p' for <obj>."
     }
 
@@ -86,8 +89,8 @@ class CompositeDynamicObjectTest extends Specification {
         obj.setProperty("p", "value")
 
         then:
-        1 * obj1.setProperty("p", "value", _)
-        1 * obj2.setProperty("p", "value", _) >> { String name, def value, SetPropertyResult r -> r.found() }
+        1 * obj1.trySetProperty("p", "value") >> false
+        1 * obj2.trySetProperty("p", "value") >> true
         0 * _
     }
 

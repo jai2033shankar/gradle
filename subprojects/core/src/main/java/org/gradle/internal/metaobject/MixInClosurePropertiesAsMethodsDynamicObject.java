@@ -32,10 +32,9 @@ public abstract class MixInClosurePropertiesAsMethodsDynamicObject extends Compo
             return;
         }
 
-        GetPropertyResult propertyLookup = new GetPropertyResult();
-        getProperty(name, propertyLookup);
-        if (propertyLookup.isFound()) {
-            Object property = propertyLookup.getValue();
+        GetPropertyResult propertyResult = tryGetProperty(name);
+        if (propertyResult.isFound()) {
+            Object property = propertyResult.getValue();
             if (property instanceof Closure) {
                 Closure closure = (Closure) property;
                 closure.setResolveStrategy(Closure.DELEGATE_FIRST);

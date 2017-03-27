@@ -349,11 +349,9 @@ public class DefaultNamedDomainObjectCollection<T> extends DefaultDomainObjectCo
         }
 
         @Override
-        public void getProperty(String name, GetPropertyResult result) {
+        public GetPropertyResult tryGetProperty(String name) {
             T t = findByName(name);
-            if (t != null) {
-                result.result(t);
-            }
+            return t == null ? GetPropertyResult.notFound() : GetPropertyResult.found(t);
         }
 
         @Override

@@ -41,8 +41,8 @@ public abstract class AbstractDynamicObject implements DynamicObject {
     }
 
     @Override
-    public void getProperty(String name, GetPropertyResult result) {
-        // No such property
+    public GetPropertyResult tryGetProperty(String name) {
+        return GetPropertyResult.notFound();
     }
 
     @Nullable
@@ -56,8 +56,7 @@ public abstract class AbstractDynamicObject implements DynamicObject {
 
     @Override
     public Object getProperty(String name) throws MissingPropertyException {
-        GetPropertyResult result = new GetPropertyResult();
-        getProperty(name, result);
+        GetPropertyResult result = tryGetProperty(name);
         if (!result.isFound()) {
             throw getMissingProperty(name);
         }
@@ -65,15 +64,14 @@ public abstract class AbstractDynamicObject implements DynamicObject {
     }
 
     @Override
-    public void setProperty(String name, Object value, SetPropertyResult result) {
-        // No such property
+    public boolean trySetProperty(String name, Object value) {
+        return false;
     }
 
     @Override
     public void setProperty(String name, Object value) throws MissingPropertyException {
-        SetPropertyResult result = new SetPropertyResult();
-        setProperty(name, value, result);
-        if (!result.isFound()) {
+        boolean found = trySetProperty(name, value);
+        if (!found) {
             throw setMissingProperty(name);
         }
     }
