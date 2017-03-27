@@ -40,7 +40,7 @@ public abstract class AbstractPluginAware implements PluginAwareInternal {
 
     public void apply(Map<String, ?> options) {
         DefaultObjectConfigurationAction action = createObjectConfigurationAction();
-        ConfigureUtil.configureByMap(options, action);
+        action.configureByMap(options);
         action.execute();
     }
 

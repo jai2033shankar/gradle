@@ -24,9 +24,15 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.internal.Factory;
 import org.gradle.internal.exceptions.DiagnosticsVisitor;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.internal.typeconversion.*;
+import org.gradle.internal.typeconversion.NotationConvertResult;
+import org.gradle.internal.typeconversion.NotationConverter;
+import org.gradle.internal.typeconversion.NotationParser;
+import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.SimpleMapNotationConverter;
+import org.gradle.internal.typeconversion.TypeConversionException;
 
 import java.io.File;
+import java.util.Map;
 
 public class MavenArtifactNotationParserFactory implements Factory<NotationParser<Object, MavenArtifact>> {
     private final Instantiator instantiator;
@@ -114,15 +120,17 @@ public class MavenArtifactNotationParserFactory implements Factory<NotationParse
         }
     }
 
-    private class MavenArtifactMapNotationConverter extends MapNotationConverter<MavenArtifact> {
+    private class MavenArtifactMapNotationConverter extends SimpleMapNotationConverter<MavenArtifact> {
         private final NotationParser<Object, MavenArtifact> sourceNotationParser;
 
         private MavenArtifactMapNotationConverter(NotationParser<Object, MavenArtifact> sourceNotationParser) {
             this.sourceNotationParser = sourceNotationParser;
         }
 
-        protected MavenArtifact parseMap(@MapKey("source") Object source) {
-            return sourceNotationParser.parseNotation(source);
+        @Override
+        protected MavenArtifact parseMap(Map<String, ?> notation) {
+            checkMandatoryKeys(notation, "source");
+            return sourceNotationParser.parseNotation(notation.get("source"));
         }
 
         @Override

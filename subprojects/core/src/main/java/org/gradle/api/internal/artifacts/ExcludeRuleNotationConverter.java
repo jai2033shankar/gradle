@@ -18,14 +18,14 @@ package org.gradle.api.internal.artifacts;
 
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.artifacts.ExcludeRule;
-import org.gradle.api.tasks.Optional;
 import org.gradle.internal.exceptions.DiagnosticsVisitor;
-import org.gradle.internal.typeconversion.MapKey;
-import org.gradle.internal.typeconversion.MapNotationConverter;
 import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.SimpleMapNotationConverter;
 
-public class ExcludeRuleNotationConverter extends MapNotationConverter<ExcludeRule> {
+import java.util.Map;
+
+public class ExcludeRuleNotationConverter extends SimpleMapNotationConverter<ExcludeRule> {
 
     private static final NotationParser<Object, ExcludeRule> PARSER =
             NotationParserBuilder.toType(ExcludeRule.class).converter(new ExcludeRuleNotationConverter()).toComposite();
@@ -39,11 +39,14 @@ public class ExcludeRuleNotationConverter extends MapNotationConverter<ExcludeRu
         visitor.candidate("Maps with 'group' and/or 'module'").example("[group: 'com.google.collections', module: 'google-collections']");
     }
 
-    protected ExcludeRule parseMap(@MapKey(ExcludeRule.GROUP_KEY) @Optional String group,
-                         @MapKey(ExcludeRule.MODULE_KEY) @Optional String module) {
+    @Override
+    protected ExcludeRule parseMap(Map<String, ?> notation) {
+        String group = getString(notation, ExcludeRule.GROUP_KEY);
+        String module = getString(notation, ExcludeRule.MODULE_KEY);
         if (group == null && module == null) {
             throw new InvalidUserDataException("Dependency exclude rule requires 'group' and/or 'module' specified. For example: [group: 'com.google.collections']");
         }
         return new DefaultExcludeRule(group, module);
     }
+
 }

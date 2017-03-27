@@ -18,11 +18,9 @@ package org.gradle.api.internal.notations;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.internal.artifacts.DefaultProjectDependencyFactory;
 import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder;
-import org.gradle.api.tasks.Optional;
 import org.gradle.internal.exceptions.DiagnosticsVisitor;
-import org.gradle.internal.typeconversion.MapKey;
-import org.gradle.internal.typeconversion.MapNotationConverter;
 import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.SimpleMapNotationConverter;
 
 import java.util.Map;
 
@@ -38,7 +36,7 @@ public class ProjectDependencyFactory {
                 .converter(new ProjectDependencyMapNotationConverter(projectFinder, factory)).toComposite().parseNotation(map);
     }
 
-    static class ProjectDependencyMapNotationConverter extends MapNotationConverter<ProjectDependency> {
+    static class ProjectDependencyMapNotationConverter extends SimpleMapNotationConverter<ProjectDependency> {
 
         private final ProjectFinder projectFinder;
         private final DefaultProjectDependencyFactory factory;
@@ -48,8 +46,10 @@ public class ProjectDependencyFactory {
             this.factory = factory;
         }
 
-        protected ProjectDependency parseMap(@MapKey("path") String path, @Optional @MapKey("configuration") String configuration) {
-            return factory.create(projectFinder.getProject(path), configuration);
+        @Override
+        protected ProjectDependency parseMap(Map<String, ?> notation) {
+            checkMandatoryKeys(notation, "path");
+            return factory.create(projectFinder.getProject(getString(notation, "path")), getString(notation, "configuration"));
         }
 
         @Override

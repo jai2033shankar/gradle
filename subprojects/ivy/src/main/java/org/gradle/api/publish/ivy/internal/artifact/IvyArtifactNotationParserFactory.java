@@ -29,6 +29,7 @@ import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.typeconversion.*;
 
 import java.io.File;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class IvyArtifactNotationParserFactory implements Factory<NotationParser<Object, IvyArtifact>> {
@@ -130,15 +131,17 @@ public class IvyArtifactNotationParserFactory implements Factory<NotationParser<
         }
     }
 
-    private class IvyArtifactMapNotationConverter extends MapNotationConverter<IvyArtifact> {
+    private class IvyArtifactMapNotationConverter extends SimpleMapNotationConverter<IvyArtifact> {
         private final NotationParser<Object, IvyArtifact> sourceNotationParser;
 
         private IvyArtifactMapNotationConverter(NotationParser<Object, IvyArtifact> sourceNotationParser) {
             this.sourceNotationParser = sourceNotationParser;
         }
 
-        protected IvyArtifact parseMap(@MapKey("source") Object source) {
-            return sourceNotationParser.parseNotation(source);
+        @Override
+        protected IvyArtifact parseMap(Map<String, ?> notation) {
+            checkMandatoryKeys(notation, "source");
+            return sourceNotationParser.parseNotation(notation.get("source"));
         }
 
         @Override

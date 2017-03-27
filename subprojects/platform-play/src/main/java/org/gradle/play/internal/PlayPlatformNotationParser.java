@@ -16,17 +16,17 @@
 
 package org.gradle.play.internal;
 
-import org.gradle.api.tasks.Optional;
 import org.gradle.internal.exceptions.DiagnosticsVisitor;
-import org.gradle.internal.typeconversion.MapKey;
-import org.gradle.internal.typeconversion.MapNotationConverter;
 import org.gradle.internal.typeconversion.NotationConvertResult;
 import org.gradle.internal.typeconversion.NotationConverter;
 import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.SimpleMapNotationConverter;
 import org.gradle.internal.typeconversion.TypeConversionException;
 import org.gradle.platform.base.internal.DefaultPlatformRequirement;
 import org.gradle.platform.base.internal.PlatformRequirement;
+
+import java.util.Map;
 
 public class PlayPlatformNotationParser {
 
@@ -44,16 +44,16 @@ public class PlayPlatformNotationParser {
         return BUILDER;
     }
 
-    static class MapConverter extends MapNotationConverter<PlatformRequirement> {
+    static class MapConverter extends SimpleMapNotationConverter<PlatformRequirement> {
         @Override
         public void describe(DiagnosticsVisitor visitor) {
             visitor.candidate("Map defining the platform versions").example("[play: '" + DefaultPlayPlatform.DEFAULT_PLAY_VERSION + "', scala:'2.11.8', java: '1.6']");
         }
 
-        protected PlatformRequirement parseMap(@MapKey("play") String playVersion,
-                                               @MapKey("scala") @Optional String scalaVersion,
-                                               @MapKey("java") @Optional String javaVersion) {
-            return new PlayPlatformRequirement(playVersion, scalaVersion, javaVersion);
+        @Override
+        protected PlatformRequirement parseMap(Map<String, ?> notation) {
+            checkMandatoryKeys(notation, "play");
+            return new PlayPlatformRequirement(getString(notation, "play"), getString(notation, "scala"), getString(notation, "java"));
         }
     }
 

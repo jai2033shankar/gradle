@@ -21,6 +21,7 @@ import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.file.ConfigurableFileTree;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.FileTreeElement;
+import org.gradle.api.internal.MapConfigurable;
 import org.gradle.api.internal.file.CompositeFileTree;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.file.copy.FileCopier;
@@ -34,11 +35,10 @@ import org.gradle.internal.file.PathToFileResolver;
 import org.gradle.util.ConfigureUtil;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class DefaultConfigurableFileTree extends CompositeFileTree implements ConfigurableFileTree {
+public class DefaultConfigurableFileTree extends CompositeFileTree implements ConfigurableFileTree, MapConfigurable {
     private Object dir;
     private final PatternSet patternSet;
     private final PathToFileResolver resolver;
@@ -47,16 +47,43 @@ public class DefaultConfigurableFileTree extends CompositeFileTree implements Co
     private final DirectoryFileTreeFactory directoryFileTreeFactory;
 
     public DefaultConfigurableFileTree(Object dir, FileResolver resolver, TaskResolver taskResolver, FileCopier fileCopier, DirectoryFileTreeFactory directoryFileTreeFactory) {
-        this(Collections.singletonMap("dir", dir), resolver, taskResolver, fileCopier, directoryFileTreeFactory);
+        this(resolver, taskResolver, fileCopier, directoryFileTreeFactory);
+        this.dir = dir;
     }
 
     public DefaultConfigurableFileTree(Map<String, ?> args, FileResolver resolver, TaskResolver taskResolver, FileCopier fileCopier, DirectoryFileTreeFactory directoryFileTreeFactory) {
+        this(resolver, taskResolver, fileCopier, directoryFileTreeFactory);
+        configureByMap(args);
+    }
+
+    private DefaultConfigurableFileTree(FileResolver resolver, TaskResolver taskResolver, FileCopier fileCopier, DirectoryFileTreeFactory directoryFileTreeFactory) {
         this.resolver = resolver;
         this.fileCopier = fileCopier;
         this.directoryFileTreeFactory = directoryFileTreeFactory;
         patternSet = resolver.getPatternSetFactory().create();
         buildDependency = new DefaultTaskDependency(taskResolver);
-        ConfigureUtil.configureByMap(args, this);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void configureByMap(Map<?, ?> options) {
+        for (Map.Entry<?, ?> entry : options.entrySet()) {
+            String key = entry.getKey().toString();
+            Object value = entry.getValue();
+
+            if (key.equals("dir")) {
+                setDir(value);
+            }
+            if (key.equals("builtBy")) {
+                setBuiltBy((Iterable<?>) value);
+            }
+            if (key.equals("includes")) {
+                setIncludes((Iterable<String>) value);
+            }
+            if (key.equals("excludes")) {
+                setExcludes((Iterable<String>) value);
+            }
+        }
     }
 
     public PatternSet getPatterns() {

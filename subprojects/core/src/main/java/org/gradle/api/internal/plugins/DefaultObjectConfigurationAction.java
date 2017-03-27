@@ -18,6 +18,7 @@ package org.gradle.api.internal.plugins;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.initialization.dsl.ScriptHandler;
+import org.gradle.api.internal.MapConfigurable;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.initialization.ClassLoaderScope;
 import org.gradle.api.internal.initialization.ScriptHandlerFactory;
@@ -31,9 +32,10 @@ import org.gradle.util.GUtil;
 
 import java.net.URI;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
-public class DefaultObjectConfigurationAction implements ObjectConfigurationAction {
+public class DefaultObjectConfigurationAction implements ObjectConfigurationAction, MapConfigurable {
 
     private final FileResolver resolver;
     private final ScriptPluginFactory configurerFactory;
@@ -134,6 +136,32 @@ public class DefaultObjectConfigurationAction implements ObjectConfigurationActi
 
         for (Runnable action : actions) {
             action.run();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void configureByMap(Map<?, ?> options) {
+        for (Map.Entry<?, ?> entry : options.entrySet()) {
+            String key = entry.getKey().toString();
+            Object value = entry.getValue();
+
+            if (key.equals("to")) {
+                to(value);
+            }
+            if (key.equals("from")) {
+                from(value);
+            }
+            if (key.equals("type")) {
+                type((Class<?>) value);
+            }
+            if (key.equals("plugin")) {
+                if (value instanceof Class) {
+                    plugin((Class<? extends Plugin>) value);
+                } else {
+                    plugin((String) value);
+                }
+            }
         }
     }
 }

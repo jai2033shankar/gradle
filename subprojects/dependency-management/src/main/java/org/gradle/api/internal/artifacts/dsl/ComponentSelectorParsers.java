@@ -20,11 +20,16 @@ import org.gradle.api.IllegalDependencyNotation;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.component.ComponentSelector;
-import org.gradle.api.artifacts.component.ModuleComponentSelector;
 import org.gradle.internal.component.local.model.DefaultProjectComponentSelector;
 import org.gradle.internal.exceptions.DiagnosticsVisitor;
-import org.gradle.internal.typeconversion.*;
+import org.gradle.internal.typeconversion.NotationConvertResult;
+import org.gradle.internal.typeconversion.NotationConverter;
+import org.gradle.internal.typeconversion.NotationParser;
+import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.SimpleMapNotationConverter;
+import org.gradle.internal.typeconversion.TypeConversionException;
 
+import java.util.Map;
 import java.util.Set;
 
 import static org.gradle.internal.component.external.model.DefaultModuleComponentSelector.newSelector;
@@ -49,14 +54,16 @@ public class ComponentSelectorParsers {
         return BUILDER;
     }
 
-    static class MapConverter extends MapNotationConverter<ComponentSelector> {
+    static class MapConverter extends SimpleMapNotationConverter<ComponentSelector> {
         @Override
         public void describe(DiagnosticsVisitor visitor) {
             visitor.example("Maps, e.g. [group: 'org.gradle', name:'gradle-core', version: '1.0'].");
         }
 
-        protected ModuleComponentSelector parseMap(@MapKey("group") String group, @MapKey("name") String name, @MapKey("version") String version) {
-            return newSelector(group, name, version);
+        @Override
+        protected ComponentSelector parseMap(Map<String, ?> notation) {
+            checkMandatoryKeys(notation, "group", "name", "version");
+            return newSelector(getString(notation, "group"), getString(notation, "name"), getString(notation, "version"));
         }
     }
 

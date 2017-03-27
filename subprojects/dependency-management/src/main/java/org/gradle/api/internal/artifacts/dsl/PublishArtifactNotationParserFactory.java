@@ -29,13 +29,13 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.internal.Factory;
 import org.gradle.internal.exceptions.DiagnosticsVisitor;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.internal.typeconversion.MapKey;
-import org.gradle.internal.typeconversion.MapNotationConverter;
 import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.SimpleMapNotationConverter;
 import org.gradle.internal.typeconversion.TypedNotationConverter;
 
 import java.io.File;
+import java.util.Map;
 
 public class PublishArtifactNotationParserFactory implements Factory<NotationParser<Object, ConfigurablePublishArtifact>> {
     private final Instantiator instantiator;
@@ -86,15 +86,17 @@ public class PublishArtifactNotationParserFactory implements Factory<NotationPar
         }
     }
 
-    private static class FileMapNotationConverter extends MapNotationConverter<ConfigurablePublishArtifact> {
+    private static class FileMapNotationConverter extends SimpleMapNotationConverter<ConfigurablePublishArtifact> {
         private final FileNotationConverter fileConverter;
 
         private FileMapNotationConverter(FileNotationConverter fileConverter) {
             this.fileConverter = fileConverter;
         }
 
-        protected PublishArtifact parseMap(@MapKey("file") File file) {
-            return fileConverter.parseType(file);
+        @Override
+        protected ConfigurablePublishArtifact parseMap(Map<String, ?> notation) {
+            checkMandatoryKeys(notation, "file");
+            return fileConverter.parseType(new File(getString(notation, "file")));
         }
     }
 

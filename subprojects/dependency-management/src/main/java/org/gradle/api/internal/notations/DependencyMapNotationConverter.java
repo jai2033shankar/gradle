@@ -17,13 +17,13 @@ package org.gradle.api.internal.notations;
 
 import org.gradle.api.artifacts.ExternalDependency;
 import org.gradle.api.internal.artifacts.dsl.dependencies.ModuleFactoryHelper;
-import org.gradle.api.tasks.Optional;
 import org.gradle.internal.exceptions.DiagnosticsVisitor;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.internal.typeconversion.MapKey;
-import org.gradle.internal.typeconversion.MapNotationConverter;
+import org.gradle.internal.typeconversion.SimpleMapNotationConverter;
 
-public class DependencyMapNotationConverter<T extends ExternalDependency> extends MapNotationConverter<T> {
+import java.util.Map;
+
+public class DependencyMapNotationConverter<T extends ExternalDependency> extends SimpleMapNotationConverter<T> {
 
     private final Instantiator instantiator;
     private final Class<T> resultingType;
@@ -38,14 +38,10 @@ public class DependencyMapNotationConverter<T extends ExternalDependency> extend
         visitor.candidate("Maps").example("[group: 'org.gradle', name: 'gradle-core', version: '1.0']");
     }
 
-    protected T parseMap(@MapKey("group") @Optional String group,
-                         @MapKey("name") @Optional String name,
-                         @MapKey("version") @Optional String version,
-                         @MapKey("configuration") @Optional String configuration,
-                         @MapKey("ext") @Optional String ext,
-                         @MapKey("classifier") @Optional String classifier) {
-        T dependency = instantiator.newInstance(resultingType, group, name, version, configuration);
-        ModuleFactoryHelper.addExplicitArtifactsIfDefined(dependency, ext, classifier);
+    @Override
+    protected T parseMap(Map<String, ?> map) {
+        T dependency = instantiator.newInstance(resultingType, getString(map, "group"), getString(map, "name"), getString(map, "version"), getString(map, "configuration"));
+        ModuleFactoryHelper.addExplicitArtifactsIfDefined(dependency, getString(map, "ext"), getString(map, "classifier"));
         return dependency;
     }
 

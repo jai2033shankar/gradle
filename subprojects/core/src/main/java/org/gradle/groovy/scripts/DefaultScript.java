@@ -108,9 +108,9 @@ public abstract class DefaultScript extends BasicScript {
     }
 
     @Override
-    public void apply(Map options) {
+    public void apply(Map<String, ?> options) {
         DefaultObjectConfigurationAction action = createObjectConfigurationAction();
-        ConfigureUtil.configureByMap(options, action);
+        action.configureByMap(options);
         action.execute();
     }
 

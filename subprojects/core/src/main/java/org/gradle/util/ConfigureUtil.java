@@ -22,6 +22,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Nullable;
 import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.DynamicObjectUtil;
+import org.gradle.api.internal.MapConfigurable;
 import org.gradle.internal.Actions;
 import org.gradle.internal.metaobject.ConfigureDelegate;
 import org.gradle.internal.metaobject.DynamicObject;
@@ -36,6 +37,9 @@ import static org.gradle.util.CollectionUtils.toStringList;
 public class ConfigureUtil {
 
     public static <T> T configureByMap(Map<?, ?> properties, T delegate) {
+        if (delegate instanceof MapConfigurable) {
+            ((MapConfigurable) delegate).configureByMap(properties);
+        }
         DynamicObject dynamicObject = DynamicObjectUtil.asDynamicObject(delegate);
 
         for (Map.Entry<?, ?> entry : properties.entrySet()) {

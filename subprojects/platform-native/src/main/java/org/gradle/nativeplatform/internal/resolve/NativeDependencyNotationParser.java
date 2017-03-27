@@ -16,12 +16,16 @@
 
 package org.gradle.nativeplatform.internal.resolve;
 
-import org.gradle.api.tasks.Optional;
 import org.gradle.internal.exceptions.DiagnosticsVisitor;
-import org.gradle.internal.typeconversion.*;
+import org.gradle.internal.typeconversion.NotationParser;
+import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.SimpleMapNotationConverter;
+import org.gradle.internal.typeconversion.TypedNotationConverter;
 import org.gradle.nativeplatform.NativeLibraryRequirement;
 import org.gradle.nativeplatform.NativeLibrarySpec;
 import org.gradle.nativeplatform.internal.ProjectNativeLibraryRequirement;
+
+import java.util.Map;
 
 class NativeDependencyNotationParser {
     public static NotationParser<Object, NativeLibraryRequirement> parser() {
@@ -43,16 +47,17 @@ class NativeDependencyNotationParser {
         }
     }
 
-    private static class NativeLibraryRequirementMapNotationConverter extends MapNotationConverter<NativeLibraryRequirement> {
+    private static class NativeLibraryRequirementMapNotationConverter extends SimpleMapNotationConverter<NativeLibraryRequirement> {
 
         @Override
         public void describe(DiagnosticsVisitor visitor) {
             visitor.candidate("Map with mandatory 'library' and optional 'project' and 'linkage' keys").example("[project: ':someProj', library: 'mylib', linkage: 'static']");
         }
 
-        @SuppressWarnings("unused")
-        protected NativeLibraryRequirement parseMap(@MapKey("library") String libraryName, @Optional @MapKey("project") String projectPath, @Optional @MapKey("linkage") String linkage) {
-            return new ProjectNativeLibraryRequirement(projectPath, libraryName, linkage);
+        @Override
+        protected NativeLibraryRequirement parseMap(Map<String, ?> notation) {
+            checkMandatoryKeys(notation, "library");
+            return new ProjectNativeLibraryRequirement(getString(notation, "library"), getString(notation, "project"), getString(notation, "linkage"));
         }
     }
 
