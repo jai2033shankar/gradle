@@ -20,10 +20,7 @@ import org.gradle.integtests.tooling.fixture.ProgressEvents
 import org.gradle.integtests.tooling.fixture.TargetGradleVersion
 import org.gradle.integtests.tooling.fixture.ToolingApiSpecification
 import org.gradle.integtests.tooling.fixture.ToolingApiVersion
-import org.gradle.tooling.BuildAction
-import org.gradle.tooling.BuildController
 import org.gradle.tooling.ProjectConnection
-import org.gradle.tooling.model.build.BuildEnvironment
 
 @ToolingApiVersion(">=2.5")
 @TargetGradleVersion(">=3.6")
@@ -75,38 +72,5 @@ class BuildProgressCrossVersionSpec extends ToolingApiSpecification {
         and:
         events.operation('Task :runInProcess').descendant('My in-process worker action')
         events.operation('Task :runForked').descendant('My forked worker action')
-    }
-
-    def "when running a build then root build progress event is 'Run build'"() {
-        when:
-        def events = new ProgressEvents()
-        withConnection { ProjectConnection connection ->
-            connection.newBuild()
-                .addProgressListener(events)
-                .run()
-        }
-
-        then:
-        events.assertIsABuild()
-    }
-
-    def "when running build action then root build progress event is 'Run build'"() {
-        when:
-        def events = new ProgressEvents()
-        withConnection { ProjectConnection connection ->
-            def runner = connection.action(new SomeBuildAction())
-            runner.addProgressListener(events)
-            runner.run()
-        }
-
-        then:
-        events.assertIsABuild()
-    }
-
-    static class SomeBuildAction implements BuildAction<BuildEnvironment> {
-        @Override
-        BuildEnvironment execute(BuildController controller) {
-            return controller.getModel(BuildEnvironment)
-        }
     }
 }
